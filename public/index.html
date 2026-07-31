@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'none'; frame-ancestors 'none'">
+  <title>WARP WireGuard 配置生成器</title>
+  <link rel="stylesheet" href="/app.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <span class="eyebrow">Cloudflare Workers</span>
+      <h1>一键生成 WARP WireGuard 配置</h1>
+      <p>密钥在浏览器本地生成。Worker 只提交公钥，私钥不会上传或保存。</p>
+    </section>
+
+    <section class="panel">
+      <form id="generator-form">
+        <div class="grid two">
+          <label>
+            <span>DNS</span>
+            <select id="dns-mode">
+              <option value="standard">Cloudflare 标准 DNS</option>
+              <option value="malware">阻止恶意软件</option>
+              <option value="family">阻止恶意软件和成人内容</option>
+              <option value="none">不写入 DNS</option>
+            </select>
+          </label>
+
+          <label>
+            <span>Endpoint</span>
+            <select id="endpoint-mode">
+              <option value="ipv4">IPv4</option>
+              <option value="hostname">主机名</option>
+              <option value="ipv6">IPv6</option>
+            </select>
+          </label>
+        </div>
+
+        <details>
+          <summary>高级设置</summary>
+          <div class="details-body">
+            <div class="grid two">
+              <label>
+                <span>MTU</span>
+                <input id="mtu" type="number" min="576" max="1500" value="1280" inputmode="numeric">
+              </label>
+
+              <label>
+                <span>PersistentKeepalive</span>
+                <input id="keepalive" type="number" min="0" max="65535" value="25" inputmode="numeric">
+              </label>
+
+              <label>
+                <span>设备名称</span>
+                <input id="device-name" maxlength="128" placeholder="可留空">
+              </label>
+
+              <label>
+                <span>设备型号</span>
+                <input id="model" maxlength="128" value="warp-worker-generator">
+              </label>
+            </div>
+
+            <label>
+              <span>Worker 访问密钥</span>
+              <input id="access-key" type="password" autocomplete="current-password" placeholder="仅在设置 ACCESS_KEY 后填写">
+              <small>只用于保护你自己的生成器，不会发给 WARP API。</small>
+            </label>
+
+            <label>
+              <span>Zero Trust / Teams enrollment JWT</span>
+              <textarea id="teams-token" rows="3" maxlength="16384" spellcheck="false" placeholder="可选；普通 WARP 请留空"></textarea>
+              <small>JWT 会经你的 Worker 转发。Zero Trust DNS 和虚拟网络策略不会自动写入配置。</small>
+            </label>
+          </div>
+        </details>
+
+        <label class="agree">
+          <input id="agree" type="checkbox" required>
+          <span>我了解这是非官方接口，并同意遵守 Cloudflare 服务条款。</span>
+        </label>
+
+        <button id="generate-button" class="primary" type="submit">生成并下载 warp.conf</button>
+      </form>
+
+      <p id="status" class="status" role="status" aria-live="polite"></p>
+    </section>
+
+    <section id="result" class="panel result" hidden>
+      <div class="result-head">
+        <div>
+          <span class="eyebrow">生成成功</span>
+          <h2>WireGuard 配置</h2>
+        </div>
+        <div class="actions">
+          <button id="copy-button" type="button">复制</button>
+          <button id="download-button" type="button">下载</button>
+        </div>
+      </div>
+      <textarea id="config-output" rows="20" readonly spellcheck="false"></textarea>
+      <dl id="account-info" class="metadata"></dl>
+    </section>
+
+    <section class="notes">
+      <h2>安全说明</h2>
+      <p>请把生成的配置当作密码文件保存。任何获得 <code>PrivateKey</code> 的人都能使用该 WARP 身份。</p>
+      <p>不要把生成器公开给陌生人使用。建议给 Worker 设置 <code>ACCESS_KEY</code>，并在 Cloudflare 控制台增加速率限制。</p>
+    </section>
+  </main>
+</body>
+</html>
